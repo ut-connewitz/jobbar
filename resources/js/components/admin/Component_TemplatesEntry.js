@@ -17,6 +17,7 @@ class Component_TemplatesEntry extends Component{
     render(){
         const template = this.props.template;
         const childTemplates = template.has_jobs || [];
+        const subscribers = template.users_subscribed == null ? [] : template.users_subscribed;
         return(
             <tbody>
                 <tr>
@@ -24,9 +25,9 @@ class Component_TemplatesEntry extends Component{
                     <td className="selectable">
                         <Link to={`/admin/templates/edit/${template.id}`} onClick={(e) => this.handleOpenEditForm(e, template)}>{template.title}</Link>
                     </td>
-                    <td >{template.users_required}</td>
-                    <td >
-                        {template.users_subscribed.map((user, uidx) => {
+                    <td>{template.users_required}</td>
+                    <td>
+                        {subscribers.map((user, uidx) => {
                             return (
                                 <div className="" key={uidx}>
                                     {user.nick}

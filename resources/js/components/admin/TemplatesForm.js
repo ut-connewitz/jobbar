@@ -164,7 +164,6 @@ class TemplatesForm extends Component{
 
     render() {
         const values = this.state.values;
-
         const errors = this.props.errors;
 
         return(

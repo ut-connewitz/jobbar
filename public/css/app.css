@@ -44,6 +44,7 @@
 
 .app .jobs-list-wrapper .day-date {
     font-size: 2em;
+    line-height: 1em;
 }
 .app .jobs-list-wrapper .day-sunday {
     color: #db0000;
@@ -51,6 +52,10 @@
 
 .app .jobs-list-wrapper .day-today {
     background: #fff8e1;
+}
+
+.app .jobs-list-wrapper .ui.compact.button {
+    padding: .58928571em;
 }
 
 .app .jobs-list-wrapper .state-deleted {
@@ -76,6 +81,10 @@
     margin: 0;
     padding: 0 .5em .5em;
     transform: scale(.9)
+}
+
+.app .jobs-list-wrapper .job-entry .header a {
+    color: rgba(0,0,0,.85);
 }
 
 .app .jobs-list-wrapper .job-is-public-toggle {

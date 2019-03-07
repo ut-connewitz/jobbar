@@ -11,13 +11,6 @@
 |
 */
 
-// use Illuminate\Support\Facades\DB;
-
-
-// Route::get('/', function () {
-//     return view('welcome');
-// });
-
 /*
-| route all request to our app */
-Route::view('/{path?}', 'app');
+| route all requests except api call to our app */
+ Route::view('/{path?}', 'app')->where('path', '^((?!api).)*');

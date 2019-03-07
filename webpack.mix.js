@@ -11,26 +11,20 @@ const mix = require('laravel-mix');
  |
  */
 
-// mix.webpackConfig({
-//    output: {
-//       publicPath: 'http://0.0.0.0:8081/'
-//     },
-//    devServer: {
-//       port: 8081,
-//       host: '0.0.0.0',
-//       // publicPath: "http://0.0.0.0:3000/",
-//       // hot: true,
-//       headers: { "Access-Control-Allow-Origin": "*" }
-//     }
-// });
-
 mix.react('resources/js/app.js', 'public/js');
 
-//   .sass('resources/sass/app.scss', 'public/css');
+// mix.setPublicPath('jobbar');
 
+// mix.webpackConfig({
+//   output: {
+//       publicPath: 'jobbar'
+//   },
+// });
+
+// options for hot module replacement
 mix.options({
    hmrOptions: {
      host: '0.0.0.0',
-     port: 8080
+     port: 8081
    }
  });

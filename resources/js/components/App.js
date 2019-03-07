@@ -7,17 +7,12 @@ import {request, getAccessToken, setAccessToken} from "../utils/helper";
 import { getErrors, setErrorHandler } from './etc/Error_Tools';
 import * as plugins from './plugins';
 
-import Component_TopBar from "./Component_TopBar";
-import Page_FrontendIndex from "./frontend/Page_FrontendIndex";
-import Page_AdminIndex from "./admin/Page_AdminIndex";
-import Page_JobsList from "./frontend/Page_JobsList";
-import Page_JobsTable from "./frontend/Page_JobsTable";
-import Page_Calendar from "./frontend/Page_Calendar";
 import Login from "./Page_Login";
-
 import Pages from "./Pages";
 
 // moment.locale("de");
+const env = process.env.NODE_ENV || 'production';
+const config = require('../config')[env];
 
 const defaultUser = {
     name: null,
@@ -53,10 +48,6 @@ class App extends Component{
             this.plugins.push(plg);
         }
 
-        console.log("Plugins: ", this.plugins);
-
-        console.log("User: ", this.state.user);
-
         this.handleLogin = this.handleLogin.bind(this);
         this.handleLogout = this.handleLogout.bind(this);
 
@@ -74,22 +65,6 @@ class App extends Component{
 
         // set moments js language
         moment.locale("de");
-
-        // request("jobs")
-        // .then(jobs => {
-        //     console.log("Jobs", jobs);
-        // })
-        // .catch(error => {
-        //     console.error(error);
-        // })
-
-        // request("system", "settings")
-        // .then(result => {
-        //     console.log("Backend settings: ", result);
-        // })
-        // .catch(error => {
-        //     console.error("Axios error: ", error);
-        // });
 
         // Only Chrome & Opera pass the error object.
         // window.onerror = function (message, file, line, col, error) {
@@ -202,82 +177,25 @@ class App extends Component{
             return(<Redirect to="/" />);
         }
 
-        // return(
-        //     <Router>
-        //     <div>
-        //       <Switch>
-        //         <Route exact path='/' render={props =>
-        //             <div>Hi root!</div>
-        //         }/>
-        //         <Route path='/bar' render={props =>
-        //             <div>Hi foo!</div>
-        //         } />
-        //       </Switch>
-        //     </div>
-        //   </Router>
-        // );
+        const routerBasename = typeof config.publicBasePath === "undefined" ? "" : config.publicBasePath;
 
         return(
-            <Router>
+            <Router basename={routerBasename}>
                 <div className="app">
 
                     {errorAlert}
 
                     <Switch>
+                        <Route path="/login/:p?" render={props =>
+                            <Login handleLogin={this.handleLogin} {...props} />
+                        } />
 
-                    <Route path="/login/:p?" render={props =>
-                        <Login handleLogin={this.handleLogin} {...props} />
-                    } />
+                        <Route path="/logout" component={RouteLogout} />
 
-                    {/* <Route path="/logout" render={() =>
-                        <Logout handleLogout={this.handleLogout} />
-                    } /> */}
-                    <Route path="/logout" component={RouteLogout} />
-
-                    <Route path="/" render={props =>
-                        <Pages plugins={this.plugins} user={this.state.user} {...props} />
-                    } />
-
+                        <Route path="/" render={props =>
+                            <Pages plugins={this.plugins} user={this.state.user} {...props} />
+                        } />
                     </Switch>
-
-                    {/* {this.state.redirectToHome &&
-                        <Redirect to="/"/>
-                    }
-
-                    {!this.state.user.isAuthenticated &&
-                        <Redirect to="/login" />
-                    }
-
-                    {this.state.user.isAuthenticated &&
-                        <Component_TopBar />
-                    }
-
-                    {this.state.user.isAuthenticated &&
-                        <Route path="/admin/" render={() =>
-                            <Page_AdminIndex plugins={this.plugins} />
-                        } />
-                    }
-
-                    <main className="ui container">
-
-                        <Route path="/login" render={() =>
-                            <Login handleLogin={this.handleLogin} />
-                        } />
-
-                        <Route path="/logout" render={() =>
-                            <Logout handleLogout={this.handleLogout} />
-                        } />
-
-                        {this.state.user.isAuthenticated &&
-                            <div>
-                                <Route path="/" exact component={Page_FrontendIndex} />
-                                <Route path="/jobs/list" component={Page_JobsList} />
-                                <Route path="/jobs/table" component={Page_JobsTable} />
-                                <Route path="/jobs/calendar" component={Page_Calendar} />
-                            </div>
-                        }
-
-                    </main> */}
 
                 </div>
             </Router>

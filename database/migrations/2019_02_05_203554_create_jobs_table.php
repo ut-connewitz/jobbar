@@ -16,11 +16,17 @@ class CreateJobsTable extends Migration
         Schema::create('laravel_jobs', function (Blueprint $table) {
             $table->increments('id');
             $table ->string('type', 100)->default("job");
-            $table->string('state', 100)->default("private");
+            $table->string('state', 100)->default("private")->nullable();
             $table->string('title')->nullable();
             $table->text('description')->nullable();
-            $table->dateTime('start')->nullable();
-            $table->dateTime('end')->nullable();
+            // $table->dateTime('start_at')->nullable();
+            // $table->dateTime('end_at')->nullable();
+            $table->date('start_date')->nullable();
+            $table->time('start_time')->nullable();
+            $table->date('end_date')->nullable();
+            $table->time('end_time')->nullable();
+
+
             $table->integer('creator')->nullable();
             $table->integer('users_required')->nullable();
             $table->longText('users_subscribed')->nullable(); // json is not compatible with mysql < xyz

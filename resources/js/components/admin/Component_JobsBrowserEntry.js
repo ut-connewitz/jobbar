@@ -8,13 +8,11 @@ import { alertError } from '../etc/Error_Tools';
 const settingsDefault = {
     // show_fields: [ 'title', '...' ],
     hide_fields: [ 'users_required', 'users_subscribed' ],
-
     allow_childJobs: false,
-
 }
 
 const childSettingsDefault = {
-    hide_fields: [ 'state', 'date_start', 'date_end', 'description' ],
+    hide_fields: [ 'state', 'start_date', 'end_date', 'description' ],
     allow_childJobs: false,
 }
 
@@ -44,7 +42,7 @@ class JobsListEntry extends Component{
         this.handleAddUser = this.handleAddUser.bind(this);
         this.handleRemoveUser = this.handleRemoveUser.bind(this);
         this.handleToggleJobState = this.handleToggleJobState.bind(this);
-        this.handleDeleteJob = this.handleDeleteJob.bind(this);
+        this.handleDeleteJob = props.handleDeleteJob;
         this.handleEditJob = this.handleEditJob.bind(this);
 
         this.parentHandlerEditJob = props.parentHandlerEditJob;
@@ -75,8 +73,8 @@ class JobsListEntry extends Component{
             nick: ''
         });
 
-        request('jobs', 'addUser', 'post', {id: job.id, user: nick})
-        .then(res => {
+        request(`jobs/${job.id}/subscriber`, '', 'POST', {nick})
+        .then(() => {
             this.parentHandlerAfterUpdate(job);
         })
         .catch(error => {
@@ -94,8 +92,8 @@ class JobsListEntry extends Component{
         job.users_subscribed.splice(userId, 1);
         this.setState({ job });
 
-        request('jobs', 'removeUser', 'delete', {id: job.id, user: userId})
-        .then(res => {
+        request(`jobs/${job.id}/subscriber`, '', 'DELETE', {user: userId})
+        .then(() => {
             this.parentHandlerAfterUpdate(job);
         })
         .catch(error => {
@@ -114,23 +112,10 @@ class JobsListEntry extends Component{
         job.state = newState;
         this.setState({ job })
 
-        request('jobs', 'update', 'PUT', {id: job.id, state: newState})
-        .catch(error => {
-            this.setState({...JSON.parse(prevState)});
-            alertError(error);
+        request('jobs/'+job.id, '', 'PUT', {state: newState})
+        .then(() => {
+            this.parentHandlerAfterUpdate(job);
         })
-
-        e.preventDefault();
-    }
-
-    handleDeleteJob(e) {
-        const job = {...this.state.job};
-        const prevState = JSON.stringify(this.state);
-
-        job.state = 'deleted';
-        this.setState({ job });
-
-        request('jobs', 'update', 'PUT', {id: job.id, state: "deleted"})
         .catch(error => {
             this.setState({...JSON.parse(prevState)});
             alertError(error);
@@ -149,11 +134,15 @@ class JobsListEntry extends Component{
         const {job, templates, isChildJob, nick} = this.state;
         const childJobs = job.has_jobs || [];
 
+        if (job.state == "deleted") {
+            return (<div></div>);
+        }
+
         return(
                 <div className={`item job-entry ${isChildJob ? 'child-job' : 'parent-job'} state-${job.state}`}>
                     <div className="content">
                         <div className="header">
-                            {job.title}
+                            <a onClick={this.handleEditJob}>{job.title}</a>
                             {job.users_required != null &&
                                 <span className={`job-users-subscriptions ${job.users_subscribed.length >= job.users_required ? 'good' : 'bad'}`}>
                                     {job.users_subscribed.length} / {job.users_required}
@@ -166,11 +155,11 @@ class JobsListEntry extends Component{
                                 <div className="actions">
                                     <Checkbox toggle checked={job.state === "public"} className="job-is-public-toggle" onChange={this.handleToggleJobState} />
                                     <a onClick={this.handleEditJob}><i className="edit icon"></i></a>
-                                    <a onClick={this.handleDeleteJob}><i className="trash icon"></i></a>
+                                    <a onClick={(e) => this.handleDeleteJob(e, job.id)}><i className="trash icon red"></i></a>
                                 </div>
                             }
-                            {job.date_start != null &&
-                                <div><small>{moment(job.date_start).format("LT [Uhr]")}</small></div>
+                            {job.start_time != null &&
+                                <div><small>{moment.utc(job.start_time, "HH:mm").format("LT [Uhr]")}</small></div>
                             }
                             {job.description != null &&
                                 <span>{job.description}</span>
@@ -188,14 +177,12 @@ class JobsListEntry extends Component{
                                         <button className="ui button" type="submit" disabled={nick == ''} onClick={this.handleAddUser}>Add</button>
                                     </form>
                                     <div className="subscribed_users">
-                                        {job.users_subscribed.map((user, uidx) => {
-                                            return (
-                                                <div className="ui label" key={uidx}>
-                                                    {user.nick}
-                                                    <i className="delete icon" onClick={e => this.handleRemoveUser(e, uidx)}></i>
-                                                </div>
-                                            );
-                                        })}
+                                        {job.users_subscribed.map((user, uidx) =>
+                                            <div className="ui label" key={uidx}>
+                                                {user.nick}
+                                                <i className="delete icon" onClick={e => this.handleRemoveUser(e, uidx)}></i>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             }

@@ -24,7 +24,6 @@ class Pages extends Component{
 
     render(){
         const props = this.props;
-        console.log("PAges props", this.props);
 
         const isAuthor = this.user.role == "author" || this.user.role == "admin";
 
@@ -54,8 +53,8 @@ class Pages extends Component{
 
                     <Route path="/" exact component={Page_JobsList} />
 
-                <Route render={props =>
-                        <div>Not found...</div>
+                    <Route render={props =>
+                        <div>Page not found</div>
                     } />
 
                 </Switch>

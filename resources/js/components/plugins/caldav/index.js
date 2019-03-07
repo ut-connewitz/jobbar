@@ -5,7 +5,7 @@ class Page extends Component {
         super(props);
     }
     render() {
-        return(<div>Caldav Settings Page as a Plugin ;) ...</div>);
+        return(<div>TODO: Caldav Settings Page as a Plugin ;) ...</div>);
     }
 }
 

@@ -3,8 +3,10 @@ import moment from 'moment';
 
 export const getJobsAtDate = (jobs, date, unit = 'day') => {
     const jobsAt = jobs.filter(job => {
-        const jobDate = moment(job.date_start);
-
+        if (job.start_date == null) {
+            return false;
+        }
+        const jobDate = moment(job.start_date);
         return jobDate.isSame(date, unit);
     })
     return jobsAt;
@@ -12,8 +14,10 @@ export const getJobsAtDate = (jobs, date, unit = 'day') => {
 
 export const getJobsInDates = (jobs, dateFrom, dateTo, unit = null) => {
     const jobsIn = jobs.filter(job => {
-        const jobDate = moment(job.date_start);
-
+        if (job.start_date == null) {
+            return false;
+        }
+        const jobDate = moment(job.start_date);
         return jobDate.isBetween(dateFrom, dateTo, unit);
     })
     return jobsIn;
@@ -30,12 +34,10 @@ export const getDays = (startDate) => {
         currentDate.add(1, "days");
         currentCounter++;
     }
-
     return days;
 }
 
 export const MonthListDay = ({date, children}) => {
-    const today = moment().date();
     return (
         <div className={`row day-wrapper ${date.isSame(moment(), 'day') ? 'day-today' : ''}`}>
             <div className={`one wide column day-data ${date.day() == 0 ? 'day-sunday' : ''}`}>

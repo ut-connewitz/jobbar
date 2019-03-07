@@ -1,15 +1,24 @@
 import React, { Component} from "react";
 import {request} from '../../utils/helper';
 import moment from 'moment';
-import { Dropdown, Modal, Dimmer, Loader, Segment, Transition } from 'semantic-ui-react'
+import { Icon, Button, Dropdown, Modal, Dimmer, Loader, Segment, Transition } from 'semantic-ui-react'
 
 import { getJobsAtDate, getJobsInDates, getDays, MonthListDay } from '../etc/Calendar_Helper';
 
-// import Component_JobsBrowserEntry from './Component_JobsBrowserEntry';
-import JobsListEntry from './Component_JobsBrowserEntryNew';
+import JobsListEntry from './Component_JobsBrowserEntry';
 import JobsForm from './Component_JobsForm';
 
 import { alertError } from '../etc/Error_Tools';
+
+const jobsFormSettings = {
+    hide_fields: [ 'users_required', 'users_subscribed' ],
+    allow_childJobs: true,
+    allow_childJobs_from_templates: true,
+    childSettings: {
+        hide_fields: [ 'state', 'description', 'start_date', 'end_date' ],
+        allow_childJobs: false,
+    }
+}
 
 class Page_JobsBrowser extends Component{
 
@@ -45,12 +54,13 @@ class Page_JobsBrowser extends Component{
         this.handleSaveEditForm = this.handleSaveEditForm.bind(this);
 
         this.handlerAfterUpdate = this.handlerAfterUpdate.bind(this);
+        this.handleDeleteJob = this.handleDeleteJob.bind(this);
     }
 
     componentDidMount() {
         // TODO may get only jobs in future for some months, dynamically load later/earlier jobs
         // get jobs
-        request('jobs', 'get', 'GET', {order: 'desc'})
+        request('jobs', '', 'GET')
         .then(res => {
             const jobs = res.data;
             this.setState({ jobs, loadingJobs: false });
@@ -60,7 +70,7 @@ class Page_JobsBrowser extends Component{
         })
 
         // get templates
-        request('templates', 'get', 'GET')
+        request('templates', '', 'GET')
         .then(res => {
             const templates = res.data;
             this.setState({ templates });
@@ -68,6 +78,29 @@ class Page_JobsBrowser extends Component{
         .catch(error => {
             alertError(error);
         })
+
+        // may update caldavjobs
+        // setTimeout(() => {
+        //     const showUpdateMsg = setTimeout(() => {
+        //         console.log("sync from caldav...");
+        //     }, 1000);
+        //     request('jobs/caldavsync', '', 'GET')
+        //     .then(res => {
+        //         console.log(res);
+        //         clearTimeout(showUpdateMsg);
+        //         request('jobs', '', 'GET')
+        //         .then(res => {
+        //             const jobs = res.data;
+        //             this.setState({ jobs, loadingJobs: false });
+        //         })
+        //         .catch(error => {
+        //             console.log(error);
+        //         })
+        //     })
+        //     .catch(error => {
+        //         console.log("An error occured on update jobs from caldav", error);
+        //     })
+        // }, 1000)
     }
 
     getNextOpenJobs(jobs) {
@@ -108,7 +141,11 @@ class Page_JobsBrowser extends Component{
     }
 
     handleOpenNewForm(e, template = {}, date = null) {
-        let values = {...template, ...{id: null, type: null, date_start: date}};
+        let values = {...template, ...{id: null, type: null}};
+        if (date !== null) {
+            values.start_date = moment(date).format("YYYY-MM-DD");
+            values.start_time = moment(date).format("HH:mm");
+        }
         this.setState({
             newFormOpen: true,
             editFormValues: values
@@ -121,19 +158,11 @@ class Page_JobsBrowser extends Component{
         const values = this.formRef.current.getPreparedValues();
         const jobs = [...self.state.jobs];
 
-        request('jobs', 'create', 'POST', values)
+        request('jobs', '', 'POST', values)
         .then(result => {
-            const newId = result.data;
-
-            request('jobs', 'getOne', 'GET', {id: newId})
-            .then(result => {
-                jobs.push(result.data);
-                self.setState({ jobs });
-                self.handleCloseNewForm();
-            })
-            .catch(error => {
-                alertError(error);
-            })
+            jobs.push(result.data);
+            self.setState({ jobs });
+            self.handleCloseNewForm();
         })
         .catch(error => {
             alertError(error);
@@ -163,26 +192,22 @@ class Page_JobsBrowser extends Component{
         const self = this;
         const values = this.formRef.current.getPreparedValues();
         const jobId = values.id;
-        const jobs = [...this.state.jobs];
+        let jobs = [...this.state.jobs];
 
-        request('jobs', 'update', 'PUT', values)
+        request('jobs/'+jobId, '', 'PUT', values)
         .then(result => {
 
-            // we need to update the state heir with remove job
-            // otherwise the job-entry component will not update!
+            // BUGFIX remove job from state and add updated
+            // otherwise the job-entry component will not update! But why...?
             const i = jobs.findIndex(j => j.id === jobId);
             jobs.splice(i, 1);
             self.setState({ jobs });
 
-            request('jobs', 'getOne', 'GET', {id: jobId})
-            .then(result => {
+            setTimeout(() => {
                 jobs.splice(i, 0, result.data);
                 self.setState({ jobs });
                 self.handleCloseEditForm();
-            })
-            .catch(error => {
-                alertError(error);
-            })
+            }, 1);
         })
         .catch(error => {
             alertError(error);
@@ -199,8 +224,28 @@ class Page_JobsBrowser extends Component{
         }
     }
 
-    handlerAfterUpdate(job) {
-        const jobs = [...this.state.jobs];
+    handleDeleteJob(e, jobId) {
+        let jobs = [...this.state.jobs];
+
+        request('jobs/'+jobId, '', 'DELETE')
+        .then(() => {
+            const i = jobs.findIndex(j => j.id === jobId);
+            jobs.splice(i, 1);
+            this.setState({ jobs });
+        })
+        .catch(error => {
+            alertError(error);
+        })
+
+        e.preventDefault();
+    }
+
+    handlerAfterUpdate(updatedJob) {
+        let jobs = [...this.state.jobs];
+
+        jobs = jobs.map(job => {
+            return job.id == updatedJob.id ? updatedJob : job;
+        })
 
         // update current state
         this.setState({jobs});
@@ -217,6 +262,7 @@ class Page_JobsBrowser extends Component{
                 onClose={this.handleCloseNewForm}
                 closeOnDimmerClick={false}
                 closeOnEscape={false}
+                centered={false}
             >
                 <Modal.Header>
                     <div className="">
@@ -225,10 +271,10 @@ class Page_JobsBrowser extends Component{
                     </div>
                     New Job
                 </Modal.Header>
-                <Modal.Content scrolling>
+                <Modal.Content>
                     <form className="ui form jobs-form" onSubmit={this.handleSaveNewForm}>
                         <JobsForm ref={this.formRef}
-                            settings={{allow_childJobs: true}}
+                            settings={jobsFormSettings}
                             templates={templates}
                             values={this.state.editFormValues}
                         />
@@ -243,7 +289,7 @@ class Page_JobsBrowser extends Component{
                 onClose={this.handleCloseEditForm}
                 closeOnDimmerClick={false}
                 closeOnEscape={false}
-                className="app"
+                centered={false}
             >
                 <Modal.Header>
                     <div className="">
@@ -252,10 +298,10 @@ class Page_JobsBrowser extends Component{
                     </div>
                     Edit Job
                 </Modal.Header>
-                <Modal.Content scrolling>
+                <Modal.Content>
                     <form className="ui form jobs-form" onSubmit={this.handleSaveEditForm}>
                         <JobsForm ref={this.formRef}
-                            settings={{allow_childJobs: true}}
+                            settings={jobsFormSettings}
                             templates={templates}
                             values={this.state.editFormValues}
                         />
@@ -284,18 +330,19 @@ class Page_JobsBrowser extends Component{
                 <div className="jobs-list-action-panel">
                     {/* <Link className="ui button" to={`/admin/jobs/new`}>New</Link>
                     <Link className="ui button" to={`/admin/jobs/new`}>New (from Template)</Link> */}
-                    <Dropdown text='New Job' icon='file' labeled button className='icon'>
-                        <Dropdown.Menu>
-                            <Dropdown.Item text="New" value={0} onClick={this.handleOpenNewForm} />
-                            <Dropdown.Divider />
-                            <Dropdown.Header content='Based on template:' icon='tags' />
-                            <Dropdown.Menu scrolling>
-                                {templates.map(tml =>
-                                    <Dropdown.Item key={tml.id} text={tml.title} value={tml.id} onClick={e => this.handleOpenNewForm(e, tml, null)} />
-                                )}
+                    <Button.Group>
+                        <Button onClick={this.handleOpenNewForm}><Icon name='file' />New Job</Button>
+                        <Dropdown floating button className='icon'>
+                            <Dropdown.Menu>
+                                <Dropdown.Header content=' Templates' icon='tags' />
+                                <Dropdown.Menu scrolling>
+                                    {templates.map(tml =>
+                                        <Dropdown.Item key={tml.id} text={tml.title} value={tml.id} onClick={e => this.handleOpenNewForm(e, tml, null)} />
+                                    )}
+                                </Dropdown.Menu>
                             </Dropdown.Menu>
-                        </Dropdown.Menu>
-                    </Dropdown>
+                        </Dropdown>
+                    </Button.Group>
                 </div>
 
                 <div className="jobs-list-navigation">
@@ -311,21 +358,22 @@ class Page_JobsBrowser extends Component{
 
                         return (
                             <MonthListDay key={i} date={day}>
-                                <div className="one wide column">
-                                    <Dropdown icon='plus' floating button basic className='icon'>
-                                        <Dropdown.Menu>
-                                            <Dropdown.Item text="New" value={0} onClick={e => this.handleOpenNewForm(e, null, newEventDate)} />
-                                            <Dropdown.Divider />
-                                            <Dropdown.Header content='Based on template:' icon='tags' />
-                                            <Dropdown.Menu scrolling>
-                                                {templates.map(tml =>
-                                                    <Dropdown.Item key={tml.id} text={tml.title} value={tml.id} onClick={e => this.handleOpenNewForm(e, tml, newEventDate)} />
-                                                )}
+                                <div className="two wide column">
+                                    <Button.Group compact={true}>
+                                        <Button onClick={e => this.handleOpenNewForm(e, null, newEventDate)} compact={true}><Icon name='plus' /></Button>
+                                        <Dropdown floating button className='icon' compact={true}>
+                                            <Dropdown.Menu>
+                                                <Dropdown.Header content=' Templates' icon='tags' />
+                                                <Dropdown.Menu scrolling>
+                                                    {templates.map(tml =>
+                                                        <Dropdown.Item key={tml.id} text={tml.title} value={tml.id} onClick={e => this.handleOpenNewForm(e, tml, newEventDate)} />
+                                                    )}
+                                                </Dropdown.Menu>
                                             </Dropdown.Menu>
-                                        </Dropdown.Menu>
-                                    </Dropdown>
+                                        </Dropdown>
+                                    </Button.Group>
                                 </div>
-                                <div className="fourteen wide column content-wrapper">
+                                <div className="thirteen wide column content-wrapper">
                                     <div className="ui items">
                                         {jobsAt.map(job => {
                                             return (
@@ -336,6 +384,7 @@ class Page_JobsBrowser extends Component{
                                                     templates={templates}
                                                     parentHandlerEditJob={this.handleOpenEditForm}
                                                     parentHandlerAfterUpdate = {this.handlerAfterUpdate}
+                                                    handleDeleteJob={this.handleDeleteJob}
                                                 />
                                             )
                                         })}
@@ -348,23 +397,6 @@ class Page_JobsBrowser extends Component{
                         <Loader>Loading</Loader>
                     </Dimmer>
                 </Dimmer.Dimmable>
-
-                {/* <table className="ui selectable celled table">
-                    <thead>
-                        <tr><th>Date</th>
-                        <th>State</th>
-                        <th>Title</th>
-                        <th>Creator</th>
-                        <th>Users Required</th>
-                        <th>Users Subscribed</th>
-                        <th>Tasks</th>
-                    </tr></thead>
-                    {jobs.map((job, jidx) => {
-                        return (
-                            <Component_JobsBrowserEntry job={job} key={jidx} />
-                        );
-                    })}
-                </table> */}
 
             </div>
         );

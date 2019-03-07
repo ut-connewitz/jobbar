@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\User;
 use Illuminate\Support\Facades\Auth;
 use Validator;
+use Illuminate\Auth\AuthenticationException;
 
 class UserController extends Controller
 {
@@ -24,8 +25,9 @@ class UserController extends Controller
             return response()->json($user, $this->successStatus);
         }
         else{
-            return response()->json(['error'=>'Unauthorised'], 401);
+            // return response()->json(['error'=>'Unauthorised'], 401);
         }
+        throw new AuthenticationException;
     }
 
     /**
@@ -39,7 +41,8 @@ class UserController extends Controller
             'name' => 'required',
             'email' => 'required|email',
             'password' => 'required',
-            'c_password' => 'required|same:password',
+            'password_repeat' => 'required|same:password',
+            'role' => 'string',
         ]);
         if ($validator->fails()) {
             return response()->json(['error'=>$validator->errors()], 401);
@@ -59,8 +62,13 @@ class UserController extends Controller
      */
     public function details()
     {
-        $user = Auth::user();
-        return response()->json($user, $this->successStatus);
+        // Auth is null with our individual auth solution
+        // $user = Auth::user();
+        // return response()->json($user, $this->successStatus);
+        if (auth('api')->user()) {
+            return response()->json(auth('api')->user(), $this->successStatus);
+        }
+        throw new AuthenticationException;
     }
 
 }

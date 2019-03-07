@@ -2,22 +2,22 @@ import React, { Component} from "react";
 import moment, { relativeTimeThreshold } from 'moment';
 import {request} from '../../utils/helper';
 
-import { Icon, Button, Checkbox, Dropdown, Message } from 'semantic-ui-react'
-
-const childSettingsDefault = {
-    hide_fields: [ 'state' ],
-    allow_childJobs: false,
-    allow_childJobs_from_templates: false
-}
+import { Checkbox, Dropdown, Message } from 'semantic-ui-react'
 
 const settingsDefault = {
-    hide_fields: [  ],
-    allow_childJobs: true,
-    allow_childJobs_from_templates: true,
-    childSettings: childSettingsDefault
+    // show_fields: [ 'title', '...' ],
+    hide_fields: [ 'users_required', 'users_subscribed' ],
+
+    allow_childJobs: false,
+
 }
 
-class Component_JobsForm extends Component{
+const childSettingsDefault = {
+    hide_fields: [ 'state', 'date_start', 'date_end', 'description' ],
+    allow_childJobs: false,
+}
+
+class Component_TemplatesForm extends Component{
 
     constructor(props) {
         super(props);
@@ -27,13 +27,13 @@ class Component_JobsForm extends Component{
             title: '',
             description: '',
             // start datetime and this form date/time properties
-            // start_at: '',
-            start_date: '',
-            start_time: '',
+            start_at: '',
+            date_start: '',
+            time_start: '',
             // end datetime and this form date/time properties
-            // end_at: '',
-            end_date: '',
-            end_time: '',
+            end_at: '',
+            date_end: '',
+            time_end: '',
 
             // has_additionals: [
             //     {type: 'location', value: ''},
@@ -60,26 +60,24 @@ class Component_JobsForm extends Component{
         values.has_jobs = values.has_jobs.map(childJobValues => {
             return {
                 ref: React.createRef(),
-                values: childJobValues
+                inValues: childJobValues
             };
         })
 
-        console.log("JobsForm values", values);
+        if (values.start_at !== '') {
+            values.time_start = moment(values.start_at).format("HH:mm");
+            values.date_start = moment(values.start_at).format("YYYY-MM-DD");
+        }
+        if (values.end_at !== '') {
+            values.time_end = moment(values.end_at).format("HH:mm");
+            values.date_end = moment(values.end_at).format("YYYY-MM-DD");
+        }
 
-        values.start_date = values.start_date === '' ? '' : moment(values.start_date).format("YYYY-MM-DD");
-        values.start_time = values.start_time === '' ? '' : moment.utc(values.start_time, "HH:mm").format("HH:mm");
-        values.end_date = values.end_date === '' ? '' : moment(values.end_date).format("YYYY-MM-DD");
-        values.end_time = values.end_time === '' ? '' : moment.utc(values.end_time, "HH:mm").format("HH:mm");
+        console.log("JobsForm values", values);
 
         this.isChildJob = props.isChildJob || false;
         this.isNewJob = typeof props.values === 'undefined' || ! "id" in props.values || props.values.id === null;
-
-        this.settings = "settings" in props
-            ? {...settingsDefault, ...props.settings}
-            : settingsDefault;
-        this.settings.childSettings = "settings" in props && "childSettings" in props.settings
-            ? {...childSettingsDefault, ...props.settings.childSettings}
-            : childSettingsDefault;
+        this.settings = {...settingsDefault, ...props.settings};
 
         this.state = {
             values: values,
@@ -95,7 +93,6 @@ class Component_JobsForm extends Component{
         this.handleRemoveChildJob = this.handleRemoveChildJob.bind(this);
         this.handleAddUser = this.handleAddUser.bind(this);
         this.handleRemoveUser = this.handleRemoveUser.bind(this);
-        this.showField = this.showField.bind(this);
     }
 
     componentDidMount() {
@@ -112,14 +109,15 @@ class Component_JobsForm extends Component{
             })
         }
 
-        if (!this.isNewJob && !this.isChildJob && this.state.values.id) {
-            request(`jobs/${this.state.values.id}/activities`, '', 'GET')
-            .then(result => {
-                this.setState({activity: result.data})
-            })
-            .catch(error => {
-                alertError(new Error(error))
-            })
+        if (!this.isNewJob && !this.isChildJob) {
+            // request('jobs', 'activity', 'GET', {id: this.state.values.id})
+            // .then(result => {
+            //     this.setState({activity: result.data})
+            // })
+            // .catch(error => {
+            //     alertError(new Error(error))
+            // })
+            console.log("TODO: get activities...");
         }
 
     }
@@ -127,36 +125,31 @@ class Component_JobsForm extends Component{
     getPreparedValues() {
         let values = {...this.state.values}; // copy object to avoid affetcs on form values
 
-        // if (values.date_start != '') {
-        //     // TODO try/catch date creation... eg with moment().isValid()
-        //     // values.date_start = new Date(
-        //     //     values.time_start != ''
-        //     //         ? values.date_start + ' ' + values.time_start
-        //     //         : values.date_start
-        //     // )
-        //     // .toISOString().slice(0, 19).replace('T', ' '); // convert to mysql datetime format
-        //     values.start_at = moment(values.date_start + ' ' + values.time_start).format("YYYY-MM-DD HH:mm:ss")
-        //     delete values.date_start;
-        //     delete values.time_start;
-        // }
+        if (values.date_start != '') {
+            // TODO try/catch date creation... eg with moment().isValid()
+            // values.date_start = new Date(
+            //     values.time_start != ''
+            //         ? values.date_start + ' ' + values.time_start
+            //         : values.date_start
+            // )
+            // .toISOString().slice(0, 19).replace('T', ' '); // convert to mysql datetime format
+            values.start_at = moment(values.date_start + ' ' + values.time_start).format("YYYY-MM-DD HH:mm:ss")
+            delete values.date_start;
+            delete values.time_start;
+        }
 
-        // if (values.date_end != '') {
-        //     // TODO try/catch date creation... eg with moment().isValid()
-        //     // values.date_end = new Date(
-        //     //     values.time_end != ''
-        //     //         ? values.date_end + ' ' + values.time_end
-        //     //         : values.date_end
-        //     // )
-        //     // .toISOString().slice(0, 19).replace('T', ' '); // convert to mysql datetime format
-        //     values.end_at = moment(values.date_end + ' ' + values.time_end).format("YYYY-MM-DD HH:mm:ss")
-        //     delete values.date_end;
-        //     delete values.time_end;
-        // }
-
-        values.start_date = values.start_date === '' ? '' : moment(values.start_date).format("YYYY-MM-DD");
-        values.start_time = values.start_time === '' ? '' : moment.utc(values.start_time, "HH:mm").format("HH:mm");
-        values.end_date = values.end_date === '' ? '' : moment(values.end_date).format("YYYY-MM-DD");
-        values.end_time = values.end_time === '' ? '' : moment.utc(values.end_time, "HH:mm").format("HH:mm");
+        if (values.date_end != '') {
+            // TODO try/catch date creation... eg with moment().isValid()
+            // values.date_end = new Date(
+            //     values.time_end != ''
+            //         ? values.date_end + ' ' + values.time_end
+            //         : values.date_end
+            // )
+            // .toISOString().slice(0, 19).replace('T', ' '); // convert to mysql datetime format
+            values.end_at = moment(values.date_end + ' ' + values.time_end).format("YYYY-MM-DD HH:mm:ss")
+            delete values.date_end;
+            delete values.time_end;
+        }
 
         // let additionals = [];
         // values.has_additionals.forEach(entry => {
@@ -187,8 +180,6 @@ class Component_JobsForm extends Component{
         Object.keys(values).forEach(key => {
             if (values[key] !== "") {
                 newValues[key] = values[key];
-            } else {
-                newValues[key] = null;
             }
         });
 
@@ -203,39 +194,32 @@ class Component_JobsForm extends Component{
      * @param {*} childValues
      */
     handleAddChildJob(e, childValues = {}) {
-        const values = this.state.values;
 
-        if ("has_jobs" in childValues) {
-            childValues.has_jobs.forEach(childJob => {
-                childJob.id = null;
-                values.has_jobs.push({
-                    ref: React.createRef(),
-                    values: childJob
-                });
-            })
-        } else {
-            values.has_jobs.push({
-                ref: React.createRef()
-            });
+        if ("has_jobs" in childValues && childValues.has_jobs.length > 0) {
+            alert("This job contains other sub-job. Sub-sub-jobs are currently not implemented");
+            childValues.has_jobs = [];
         }
+        // BUGFIX remove templates child id
+        // TODO the backend should create a new child job if given child id comes from a template!
+        // if ("id" in childValues) {
+        //     childValues.id = null;
+        // }
 
+        const values = this.state.values;
+        values.has_jobs.push({
+            ref: React.createRef(),
+            inValues: childValues
+        });
         this.setState({ values });
         e.preventDefault();
     }
 
-    handleRemoveChildJob(e, i) {
+    handleRemoveChildJob(e, removeJob) {
         const values = {...this.state.values};
-        const childJobs = values.has_jobs;
-        // BUGFIX: we need to clear the childjobs first, remove it after a timeout
-        values.has_jobs = [];
+        values.has_jobs = values.has_jobs.filter(childJob =>
+            childJob.inValues.id !== removeJob.inValues.id
+        );
         this.setState({ values });
-
-        setTimeout(() => {
-            childJobs.splice(i, 1);
-            values.has_jobs = childJobs;
-            this.setState({ values });
-        }, 1);
-
         e.preventDefault();
     }
 
@@ -309,41 +293,18 @@ class Component_JobsForm extends Component{
         this.setState({ values })
     }
 
-    showField(field) {
-        return !this.settings.hide_fields.includes(field);
-    }
-
     render() {
-        const {values, templates} = this.state;
-        const errors = this.props.errors ? this.props.errors : [];
+        const values = this.state.values;
+        const templates = this.state.templates;
+        const errors = this.props.errors;
 
-        const startDate = (
-            <div className="field">
-                <label>Date Start</label>
-                <input type="date" name="start_date" value={values.start_date} placeholder="Date - YYYY/MM/DD" onChange={this.handleChangeInput} />
-            </div>
-        );
-
-        const startTime = (
-            <div className="field">
-                <label>Time Start</label>
-                <input type="time" name="start_time" value={values.start_time} placeholder="Time - HH:TT" onChange={this.handleChangeInput} />
-            </div>
-        );
-
-        const endDate = (
-            <div className="field">
-                <label>Date End</label>
-                <input type="date" name="end_date" value={values.end_date} placeholder="Date - YYYY/MM/DD" onChange={this.handleChangeInput} />
-            </div>
-        );
-
-        const endTime = (
-            <div className="field">
-                <label>Time End</label>
-                <input type="time" name="end_time" value={values.end_time} placeholder="Time - HH:TT" onChange={this.handleChangeInput} />
-            </div>
-        );
+        // TODO use somehow generic settings function
+        const showDateStart = this.settings.hide_fields.findIndex(v => v == "date_start") < 0;
+        const showDateEnd = this.settings.hide_fields.findIndex(v => v == "date_end") < 0;
+        const showState = this.settings.hide_fields.findIndex(v => v == "state") < 0;
+        const showDescription = this.settings.hide_fields.findIndex(v => v == "description") < 0;
+        const showUsersSubscribed = this.settings.hide_fields.findIndex(v => v == "users_subscribed") < 0;
+        const showUsersRequired = this.settings.hide_fields.findIndex(v => v == "users_required") < 0;
 
         return(
             <div className="ui grid jobs-form-component">
@@ -359,47 +320,20 @@ class Component_JobsForm extends Component{
                         })}
                     </div>
                 }
-                <div className="twelve wide column">
+                <div className="ten wide column">
                     <div className="required field">
                         <label>Title</label>
                         <input required={true} type="text" name="title" placeholder="Title" value={values.title} onChange={this.handleChangeInput} />
                     </div>
 
-                    {this.showField('description') && <div className="field">
+                    {showDescription && <div className="field">
                         <label>Description / Notes</label>
-                        <textarea name="description" rows="2" value={values.description} onChange={this.handleChangeInput}></textarea>
+                        <textarea name="description" rows="1" value={values.description} onChange={this.handleChangeInput}></textarea>
                     </div> }
 
                     <div className="two fields">
                         {/* TODO add handler onUpdateDate to auto-generate the other date (eg. date end 1 hour after date start) */}
-                        {(this.showField('start_date') && this.showField('start_time')) && <div className="field two fields">
-                            {startDate}
-                            {startTime}
-                        </div>}
-
-                        {(this.showField('start_date') && !this.showField('start_time')) && <div className="field">
-                            {startDate}
-                        </div>}
-
-                        {(!this.showField('start_date') && this.showField('start_time')) && <div className="field">
-                            {startTime}
-                        </div>}
-
-                        {(this.showField('end_date') && this.showField('end_time')) && <div className="field two fields">
-                            {endDate}
-                            {endTime}
-                        </div>}
-
-                        {(this.showField('end_date') && !this.showField('end_time')) && <div className="field">
-                            {endDate}
-                        </div>}
-
-                        {(!this.showField('end_date') && this.showField('end_time')) && <div className="field">
-                            {endTime}
-                        </div>}
-
-
-                        {/* {showDateStart && <div className="field two fields">
+                        {showDateStart && <div className="field two fields">
                             <div className="field">
                                 <label>Date Start</label>
                                 <input type="date" name="date_start" value={values.date_start} placeholder="Date - YYYY/MM/DD" onChange={this.handleChangeInput} />
@@ -418,18 +352,18 @@ class Component_JobsForm extends Component{
                                 <label>Time</label>
                                 <input type="time" name="time_end" value={values.time_end} placeholder="Time - HH:TT" onChange={this.handleChangeInput} />
                             </div>
-                        </div> } */}
+                        </div> }
                     </div>
 
                     {values.has_jobs.map((childJob, cjidx) =>
                         <div className="ui grid field has_job" key={cjidx}>
                             <div className="one wide column">
-                                <a onClick={e => this.handleRemoveChildJob(e, cjidx)}><i className="trash icon"></i></a>
+                                <a onClick={e => this.handleRemoveChildJob(e, childJob)}><i className="trash icon"></i></a>
                             </div>
                             <div className="fifteen wide column field">
                                 <Component_JobsForm ref={childJob.ref}
-                                    settings={this.settings.childSettings}
-                                    values={childJob.values}
+                                    settings={childSettingsDefault}
+                                    values={childJob.inValues}
                                     templates={templates}
                                     isChildJob={true}
                                 />
@@ -438,30 +372,26 @@ class Component_JobsForm extends Component{
                     )}
 
                     {this.settings.allow_childJobs && <div className="field">
-                        {!this.settings.allow_childJobs_from_templates &&
-                            <button className="ui labeled icon button" onClick={this.handleAddChildJob}><i className="file icon"></i>New Subtask</button>
-                        }
-                        {this.settings.allow_childJobs_from_templates &&
-                            <Button.Group>
-                                <Button onClick={this.handleAddChildJob}><Icon name='file' />New Subtask</Button>
-                                <Dropdown floating button className='icon'>
-                                    <Dropdown.Menu>
-                                        <Dropdown.Header content=' Templates' icon='tags' />
-                                        <Dropdown.Menu scrolling>
-                                            {templates.map(tml =>
-                                                <Dropdown.Item key={tml.id} text={tml.title} value={tml.id} onClick={e => this.handleAddChildJob(e, tml)} />
-                                            )}
-                                        </Dropdown.Menu>
-                                    </Dropdown.Menu>
-                                </Dropdown>
-                            </Button.Group>
-                        }
+                        {/* WORKAROUND while templates are not strict for parents/childs only, do not use templates here */}
+                        <button className="ui labeled icon button" onClick={this.handleAddChildJob}><i className="file icon"></i>New Subtask TODO template dropdown...</button>
+                        {/* <Dropdown text='New Subtask' icon='file' floating labeled button pointing={"top"} className='icon'>
+                            <Dropdown.Menu>
+                                <Dropdown.Item text="New" value={0} onClick={this.handleAddChildJob} />
+                                <Dropdown.Divider />
+                                <Dropdown.Header content='Based on template:' icon='tags' />
+                                <Dropdown.Menu scrolling>
+                                    {templates.map(tml =>
+                                        <Dropdown.Item key={tml.id} text={tml.title} value={tml.id} onClick={(e) => this.handleAddChildJob(e, tml)} />
+                                    )}
+                                </Dropdown.Menu>
+                            </Dropdown.Menu>
+                        </Dropdown> */}
                     </div> }
 
                 </div>
 
-                <div className="four wide column">
-                    {this.showField('state') && <div className="field">
+                <div className="six wide column">
+                    {showState && <div className="field">
                         <label>State</label>
                         <Checkbox toggle checked={values.state == "public"} name="state" className="job-is-public-toggle" onChange={this.handleToggleState} />
                         {/* <select className="ui dropdown" value={values.state} name="state" onChange={this.handleChangeInput}>
@@ -488,12 +418,12 @@ class Component_JobsForm extends Component{
                         </select>
                     </div> */}
 
-                    {this.showField('users_required') && <div className="field">
+                    {showUsersRequired && <div className="field">
                         <label>Required Users</label>
                         <input type="number" name="users_required" value={values.users_required} placeholder="Required Users, e.g. 2" onChange={this.handleChangeInput} />
                     </div>}
 
-                    {this.showField('users_subscribed') && <div className="field">
+                    {showUsersSubscribed && <div className="field">
                         <label>Subscribed Users</label>
                         {values.users_subscribed.map((user, uidx) =>
                             <div className="ui label" key={uidx}>
@@ -512,7 +442,7 @@ class Component_JobsForm extends Component{
                             <h3>Activities</h3>
                             <ul>
                                 {this.state.activity.map(entry =>
-                                    <li key={entry.id}>{entry.meta_value}</li>
+                                    <li key={entry.id}>{entry.message}</li>
                                 )}
                             </ul>
                     </div>}
@@ -524,4 +454,4 @@ class Component_JobsForm extends Component{
   }
 }
 
-export default Component_JobsForm;
+export default Component_TemplatesForm;

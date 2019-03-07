@@ -2,7 +2,6 @@ import React, { Component} from "react";
 import { Redirect } from "react-router-dom";
 
 import {request} from "../utils/helper";
-import { alertError } from './etc/Error_Tools';
 
 class PageLogin extends Component{
 
@@ -15,7 +14,6 @@ class PageLogin extends Component{
         };
 
         this.parentHandleLogin = props.handleLogin;
-        // this.handleLogin = this.handleLogin.bind(this);
 
         this.handleChangeInput = this.handleChangeInput.bind(this);
         this.handleSubmitForm = this.handleSubmitForm.bind(this);
@@ -36,18 +34,24 @@ class PageLogin extends Component{
     handleSubmitForm(e) {
         request('login', '', 'POST', this.state)
         .then(result => {
-            console.log("Login result: ", result);
             if (result.data == false) {
                 this.setState({loginError: "Wrong user or password. Please try again"})
             } else {
-                //this.handleLogin(result.data);
                 this.parentHandleLogin(result.data, () => {
-                    this.setState({redirectTo: '/'});
+                    let redirectTo = this.props.location.state
+                        ? this.props.location.state.from
+                        : { pathname: "/" };
+
+                    if ((result.data.role == "admin" || result.data.role == "author") && redirectTo.pathname == "/") {
+                        redirectTo = { pathname: "/admin" };
+                    }
+
+                    this.setState({redirectTo});
                 })
             }
         })
         .catch(error => {
-            alertError(new Error(error))
+            this.setState({loginError: "Wrong user or password. Please try again"})
         })
 
         e.preventDefault();
@@ -59,42 +63,41 @@ class PageLogin extends Component{
     }
 
     render(){
-        let { from } = this.props.location.state || { from: { pathname: "/" } };
-
-        // console.log("Login props: ", this.props, this.state);
-        // console.log("Redirect to!", from, this.props)
-
-
         if (this.state.redirectTo) {
-            return (<Redirect to={from} />);
+            return (<Redirect to={this.state.redirectTo} />);
         }
 
         return(
-            <main className="ui container">
-                <h2>Login</h2>
+            <div className="ui middle aligned center aligned grid" style={{marginTop: 50 + 'px'}}>
+                <div className="column" style={{maxWidth: 450 + 'px'}}>
+                    <h2 className="ui header">Jobbar Login</h2>
+                    <form className="ui large form">
+                        <div className="ui stacked segment">
+                            {this.state.loginError !== false &&
+                                <div className="ui negative message">
+                                    <i className="close icon" onClick={this.closeError}></i>
+                                    <div className="header">Error</div>
+                                    <p>{this.state.loginError}</p>
+                                </div>
+                            }
+                            <div className="field">
+                                <div className="ui left icon input">
+                                    <i className="user icon"></i>
+                                    <input type="text" name="name" placeholder="Username" onChange={this.handleChangeInput} />
+                                </div>
+                            </div>
+                            <div className="field">
+                                <div className="ui left icon input">
+                                    <i className="lock icon"></i>
+                                    <input type="password" name="password" placeholder="Password" required onChange={this.handleChangeInput} />
+                                </div>
+                            </div>
+                                <button className="ui button primary" type="submit" onClick={this.handleSubmitForm}>Login</button>
+                        </div>
 
-                {this.state.loginError !== false &&
-                    <div className="ui negative message">
-                        <i className="close icon" onClick={this.closeError}></i>
-                        <div className="header">Error</div>
-                        <p>{this.state.loginError}</p>
-                    </div>
-                }
-
-                <form className="ui form">
-                    <div className="field">
-                        <label>User</label>
-                        <input type="text" name="name" placeholder="Username" onChange={this.handleChangeInput} />
-                    </div>
-                    <div className="field">
-                        <label>Password</label>
-                        <input type="password" name="password" placeholder="Password" onChange={this.handleChangeInput} />
-                    </div>
-                    <div className="field">
-                        <button className="ui button primary" type="submit" onClick={this.handleSubmitForm}>Login</button>
-                    </div>
-                </form>
-            </main>
+                    </form>
+                </div>
+            </div>
         );
   }
 }

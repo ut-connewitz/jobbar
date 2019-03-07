@@ -7,13 +7,11 @@ import { alertError } from '../etc/Error_Tools';
 const settingsDefault = {
     // show_fields: [ 'title', '...' ],
     hide_fields: [ 'users_required', 'users_subscribed' ],
-
     allow_childJobs: false,
-
 }
 
 const childSettingsDefault = {
-    hide_fields: [ 'state', 'date_start', 'date_end', 'description' ],
+    hide_fields: [ 'state', 'start_date', 'end_date', 'description' ],
     allow_childJobs: false,
 }
 
@@ -61,7 +59,7 @@ class JobsListJob extends Component{
             nick: ''
         });
 
-        request('jobs', 'addUser', 'post', {id: job.id, user: nick})
+        request(`jobs/${job.id}/subscriber`, '', 'POST', {nick})
         .catch(error => {
             this.setState({...JSON.parse(prevState)});
             alertError(error);
@@ -77,7 +75,7 @@ class JobsListJob extends Component{
         job.users_subscribed.splice(userId, 1);
         this.setState({ job });
 
-        request('jobs', 'removeUser', 'delete', {id: job.id, user: userId})
+        request(`jobs/${job.id}/subscriber`, '', 'DELETE', {user: userId})
         .catch(error => {
             this.setState({...JSON.parse(prevState)});
             alertError(error);
@@ -92,8 +90,8 @@ class JobsListJob extends Component{
         if (this.parentIsClosed) {
             return true;
         }
-        if (job.date_start !== null) {
-            return moment(job.date_start).isSame(now, "day");
+        if (job.start_date !== null) {
+            return moment(job.start_date).isSame(now, "day");
         }
         return job.state == "public_closed";
     }
@@ -120,8 +118,8 @@ class JobsListJob extends Component{
                         }
                     </div>
                     <div className="meta">
-                        {job.date_start != null &&
-                            <div><small>{moment(job.date_start).format("LT [Uhr]")}</small></div>
+                        {job.start_time != null &&
+                            <div><small>{moment.utc(job.start_time, "HH:mm").format("LT [Uhr]")}</small></div>
                         }
                         {job.description != null &&
                             <span>{job.description}</span>

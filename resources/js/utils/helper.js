@@ -15,11 +15,15 @@ export const setAccessToken = (token = '') => {
 
 
 export const request = (model = '', path = '', type = 'get', data = {}) => {
-    let url = `${config.backend.host}:${config.backend.port}${config.backend.path}${model}/?path=${path}`;
+    // let url = `${config.backend.host}:${config.backend.port}${config.backend.path}${model}`;
+    let url = `${config.backend.host}${config.backend.path}${model}`;
     if (type.toUpperCase() === 'GET' && Object.keys(data).length > 0) {
+        let params = "";
         for (const key in data) {
-            url = `${url}&${key}=${data[key]}`;
+            // url = `${url}&${key}=${data[key]}`;
+            params = `${key}=${data[key]}&${params}`;
         }
+        url = `${url}?${params}`;
     }
     const token = getAccessToken();
     // data = token === null
@@ -54,11 +58,19 @@ export const request = (model = '', path = '', type = 'get', data = {}) => {
 
             if (error.response) {
                 console.log("Axios response", error.response);
-                if (error.response.status == 401) {
-                    // reject "unauthorized" ...
-                }
-                reject(error.response);
+                const status = error.response.status ? error.response.status : "";
 
+                if (error.response.data) {
+                    let message = error.response.data;
+                    if (error.response.data.message && error.response.data.message != "") {
+                        message = error.response.data.message;
+                    } else if (error.response.statusText) {
+                        message = error.response.statusText;
+                    }
+                    reject({ message, status });
+                } else {
+                    reject(error.response);
+                }
             } else if (error.request) {
                 console.log("Axios request", error.request);
                 reject(error.request);

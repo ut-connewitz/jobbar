@@ -24,19 +24,26 @@ export const addError = (error = null) => {
 
 export const alertError = (error = null) => {
 
-    // if (typeof error === "string") {
-    //     error = {message: error}
-    // } else if (typeof error === "object") {
-    //     if ("data" in error && "status" in error && "statusText" in error) {
-    //         error = {message: `${data} ${status} ${statusText}`}
-    //     } else {
-    //         error = {message: JSON.stringify(error)}
-    //     }
-    // } else {
-    //     error = {message: JSON.stringify(error)}
-    // }
+    if (typeof error === "string") {
+        error = {message: error}
+    } else if (typeof error === "object") {
+        let message = "";
+        if ("message" in error) {
+            message = error.message;
+        } else if ("statusText" in error) {
+            message = error.statusText;
+        } else {
+            message = JSON.stringify(error);
+        }
+        if ("status" in error) {
+            message += `, Status: ${error.status}`;
+        }
+        error = {message};
+    } else {
+        error = {message: JSON.stringify(error)}
+    }
 
-    error = {message: JSON.stringify(error)}
+    // error = {message: JSON.stringify(error)}
 
     addError(error);
 

@@ -31,7 +31,7 @@ class JobsList extends Component{
         const startOfMonth = moment().format('YYYY-MM-DD');
         const endOfMonth   = moment().add(1, 'months').format('YYYY-MM-DD');
 
-        request('jobs', 'get', 'get', {state: 'public', from_date: startOfMonth, to_date: endOfMonth})
+        request('jobs', '', 'GET', {state: 'public', from_date: startOfMonth, to_date: endOfMonth})
         .then(res => {
             const jobs = res.data;
             this.setState({ jobs, loadingJobs: false });

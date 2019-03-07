@@ -5,7 +5,20 @@ import { Modal } from 'semantic-ui-react'
 
 
 import Component_TemplatesEntry from './Component_TemplatesEntry';
-import TemplatesForm from './TemplatesForm';
+// import TemplatesForm from './TemplatesForm';
+import TemplatesForm from './Component_JobsForm';
+
+import { alertError } from '../etc/Error_Tools';
+
+const templatesFormSettings = {
+    hide_fields: [ 'state', 'start_date', 'start_time', 'end_date', 'end_time' ],
+    allow_childJobs: true,
+    allow_childJobs_from_templates: false,
+    childSettings: {
+        hide_fields: [ 'state', 'start_date', 'end_date', 'description' ],
+        allow_childJobs: false,
+    }
+}
 
 class Page_Templates extends Component{
 
@@ -36,13 +49,13 @@ class Page_Templates extends Component{
     }
 
     componentDidMount() {
-        request('templates', 'get', 'GET', {order: 'desc'})
+        request('templates', '', 'GET', {order: 'desc'})
         .then(res => {
             const templates = res.data;
             this.setState({ templates });
         })
         .catch(error => {
-            console.error(error);
+            alertError(error);
         })
     }
 
@@ -59,34 +72,28 @@ class Page_Templates extends Component{
         const self = this;
         const values = this.formRef.current.getPreparedValues();
         let templates = [...this.state.templates];
+        const formErrors = [...this.state.formErrors];
 
         // TODO disable form / loading state !
 
-        request('templates', 'create', 'POST', values)
-        .then(res => {
-            const newId = res.data;
-            request('templates', 'getOne', 'GET', {id: newId})
-            .then(res => {
-                const newTemplate = res.data;
-                templates = [newTemplate].concat(templates);
-                self.setState({ templates });
-                self.handleCloseNewForm();
-            })
-            .catch(error => {
-                console.error(error);
-            })
+        request('templates', '', 'POST', values)
+        .then(result => {
+            templates.push(result.data);
+            self.setState({ templates });
+            self.handleCloseNewForm();
         })
         .catch(error => {
-            console.error(error);
+            formErrors.push(error);
+            self.setState({ formErrors });
         })
 
         e.preventDefault();
     }
 
-    handleOpenEditForm(e, template) {
+    handleOpenEditForm(e, values) {
         this.setState({
             editFormOpen: true,
-            editTemplateValues: template
+            editTemplateValues: values
         })
         e.preventDefault()
     }
@@ -104,25 +111,21 @@ class Page_Templates extends Component{
         const templates = [...this.state.templates];
         const formErrors = [...this.state.formErrors];
 
-        request('templates', 'update', 'PUT', values)
+        request('templates/'+tmlId, '', 'PUT', values)
         .then(result => {
 
-            // we need to update the state heir with remove job
-            // otherwise the job-entry component will not update!
+            // BUGFIX remove job from state and add updated
+            // otherwise the job-entry component will not update! But why...?
             const i = templates.findIndex(j => j.id === tmlId);
             templates.splice(i, 1);
             self.setState({ templates });
 
-            request('templates', 'getOne', 'GET', {id: tmlId})
-            .then(result => {
+            setTimeout(() => {
                 templates.splice(i, 0, result.data);
                 self.setState({ templates });
                 self.handleCloseEditForm();
-            })
-            .catch(error => {
-                formErrors.push(error);
-                self.setState({ formErrors });
-            })
+            }, 1);
+
         })
         .catch(error => {
             formErrors.push(error);
@@ -135,19 +138,14 @@ class Page_Templates extends Component{
     handleDeleteTemplate(e, tmlId) {
         const templates = [...this.state.templates];
 
-        request('templates', 'remove', 'DELETE', {id: tmlId})
-        .then(result => {
-
+        request('templates/'+tmlId, '', 'DELETE')
+        .then(() => {
             const i = templates.findIndex(j => j.id === tmlId);
             templates.splice(i, 1);
             this.setState({ templates });
-            this.handleCloseEditForm();
-
         })
         .catch(error => {
-            // formErrors.push(error);
-            // self.setState({ formErrors });
-            console.log(error);
+            alertError(error);
         })
 
         e.preventDefault();
@@ -162,6 +160,7 @@ class Page_Templates extends Component{
                 onClose={this.handleCloseNewForm}
                 closeOnDimmerClick={false}
                 closeOnEscape={false}
+                centered={false}
             >
                 <Modal.Header>
                     <div className="">
@@ -170,11 +169,16 @@ class Page_Templates extends Component{
                     </div>
                     New Template
                 </Modal.Header>
-                <Modal.Content scrolling>
+                <Modal.Content>
                     <form className="ui form jobs-form" onSubmit={this.handleSaveNewForm}>
-                        <TemplatesForm ref={this.formRef}
+                        {/* <TemplatesForm ref={this.formRef}
                             allow_childJobs={true}
                             values={{}}
+                            errors={this.state.formErrors}
+                        /> */}
+                        <TemplatesForm ref={this.formRef}
+                            settings={templatesFormSettings}
+                            values={this.state.editTemplateValues}
                             errors={this.state.formErrors}
                         />
                     </form>
@@ -188,6 +192,7 @@ class Page_Templates extends Component{
                 onClose={this.handleCloseEditForm}
                 closeOnDimmerClick={false}
                 closeOnEscape={false}
+                centered={false}
             >
                 <Modal.Header>
                     <div className="">
@@ -196,10 +201,15 @@ class Page_Templates extends Component{
                     </div>
                     Edit Template
                 </Modal.Header>
-                <Modal.Content scrolling>
+                <Modal.Content>
                     <form className="ui form jobs-form" onSubmit={this.handleSaveEditForm}>
-                        <TemplatesForm ref={this.formRef}
+                        {/* <TemplatesForm ref={this.formRef}
                             allow_childJobs={true}
+                            values={this.state.editTemplateValues}
+                            errors={this.state.formErrors}
+                        /> */}
+                        <TemplatesForm ref={this.formRef}
+                            settings={templatesFormSettings}
                             values={this.state.editTemplateValues}
                             errors={this.state.formErrors}
                         />
@@ -247,9 +257,14 @@ class Page_Templates extends Component{
                         <form className="ui form jobs-form" onSubmit={this.handleSaveNewForm}>
                             <button className="ui button " onClick={this.handleCloseNewForm}>Cancel</button>
                             <button className="ui button primary" type="submit" onClick={this.handleSaveNewForm}>Save</button>
-                            <TemplatesForm ref={this.formRef}
+                            {/* <TemplatesForm ref={this.formRef}
                                 allow_childJobs={true}
                                 values={{}}
+                                errors={this.state.formErrors}
+                            /> */}
+                            <TemplatesForm ref={this.formRef}
+                                settings={templatesFormSettings}
+                                values={this.state.editTemplateValues}
                                 errors={this.state.formErrors}
                             />
                         </form>
@@ -263,11 +278,12 @@ class Page_Templates extends Component{
                     })
 
                     if (typeof template === "undefined") {
-                        return (
-                            <form className="ui loading form">
-                                <TemplatesForm ref={this.formRef} allow_childJobs={true} />
-                            </form>
-                        );
+                        // return (
+                        //     <form className="ui loading form">
+                        //         <TemplatesForm ref={this.formRef} allow_childJobs={true} />
+                        //     </form>
+                        // );
+                        return (<div>Error: template not found...</div>);
                     }
 
                     return (
@@ -276,7 +292,12 @@ class Page_Templates extends Component{
                                 <button className="ui button primary" type="submit" onClick={this.handleSaveEditForm}>Apply</button>
                                 <button className="ui button " onClick={this.handleCloseNewForm}>Cancel</button>
                             </div>
-                            <TemplatesForm ref={this.formRef} allow_childJobs={true} values={template} />
+                            {/* <TemplatesForm ref={this.formRef} allow_childJobs={true} values={template} /> */}
+                            <TemplatesForm ref={this.formRef}
+                                settings={templatesFormSettings}
+                                values={this.state.editTemplateValues}
+                                errors={this.state.formErrors}
+                            />
                         </form>
                     );
                 }} />

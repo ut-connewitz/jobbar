@@ -12,7 +12,9 @@
         "fideloper/proxy": "^4.0",
         "laravel/framework": "5.7.*",
         "laravel/passport": "^7.1",
-        "laravel/tinker": "^1.0"
+        "laravel/tinker": "^1.0",
+        "sabre/vobject": "~4.1",
+        "thecsea/simple-caldav-client": "^0.1.9"
     },
     "require-dev": {
         "beyondcode/laravel-dump-server": "^1.0",

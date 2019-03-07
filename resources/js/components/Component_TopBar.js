@@ -36,11 +36,11 @@ class TopBar extends Component{
         const backendNavi = () => {
             return (
                 <div className="ui container">
-                    <Link to="/" className="header item"><i className="arrow circle left icon"></i> Frontpage</Link>
+                    {/* <Link to="/" className="header item"><i className="arrow circle left icon"></i> Frontpage</Link> */}
                     <Link to="/admin/jobs" className="item">Jobs</Link>
                     <Link to="/admin/templates" className="item">Templates</Link>
-                    <Link to="/admin/user" className="item">User</Link>
-                    <Link to="/admin/system" className="item">System</Link>
+                    {/* <Link to="/admin/user" className="item">User</Link>
+                    <Link to="/admin/system" className="item">System</Link> */}
 
                     {this.plugins.map((plugin, i) => {
                         // const entry = plugin.getMenu();
@@ -60,20 +60,22 @@ class TopBar extends Component{
                     <Link to="/" className="header item"><i className="arrow circle left icon"></i> Frontpage</Link>
                 )}/> */}
 
-                <Switch>
+                {isAuthor && <Switch>
+                    <Route path="/admin" component={backendNavi} />
 
-                    {isAuthor &&
-                        <Route path="/admin" component={backendNavi} />
-                    }
+                    <Route render={props =>
+                        <div className="ui container">
+                            <Link to="/admin/" className="item">Admin</Link>
+                        </div>
+                    } />
+                </Switch>}
 
-                    <Route path="/" component={frontendNavi} />
-
-                </Switch>
+                {/* <Route path="/" component={frontendNavi} /> */}
 
                 <div className="right menu">
                     {/* <Link to="/admin/" className="item">Admin</Link> */}
                     {/* <Link to="/admin/profile" className="item"><i className="user icon"></i></Link> */}
-                    <Dropdown icon='user' className='link item'>
+                    {/* <Dropdown icon='user' className='link item'>
                         <Dropdown.Menu>
                             {isAuthor &&
                                 <Link to="/" className="item">TODO: admin-settings</Link>
@@ -81,7 +83,9 @@ class TopBar extends Component{
                             <Link to="/admin/profile" className="item">Profile</Link>
                             <Link to="/logout" className="item">Logout</Link>
                         </Dropdown.Menu>
-                    </Dropdown>
+                    </Dropdown> */}
+                    <a className="item" href="https://github.com/ut-connewitz/jobbar-app/wiki" target="_blank"><i className="question circle icon"></i></a>
+                    <Link to="/logout" className="item">Logout</Link>
                 </div>
             </div>
         );
