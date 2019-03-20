@@ -32,7 +32,7 @@ TODO (downlaod release, ...)
 
 Basically its based on a [Laravel](http://laravel.com/) REST API backend and a [ReactJS](http://reactjs.org/) frontend.
 
-To setup a (Docker based) development environmant and start coding see https://github.com/ut-connewitz/jobbar-dev-env .
+To setup a (Docker based) development environmant, start coding and run tests see https://github.com/ut-connewitz/jobbar-dev-env .
 
 ## License
 
