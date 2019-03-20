@@ -59,20 +59,20 @@ class CaldavSync implements ShouldQueue
 
     }
 
-    public function MayHandle() {
-        // sleep(20);
-        // return $this->syncedEvents;
+    // public function MayHandle() {
+    //     // sleep(20);
+    //     // return $this->syncedEvents;
 
-        $time = time();
+    //     $time = time();
 
-        $lastUpdate = $this->getLastUpdate();
-        $lastUpdate = $lastUpdate ? intval($lastUpdate) : 0;
-        $updatePeriod = $this->getUpdatePeriod();
-        if ($time - $updatePeriod >= $lastUpdate) {
-            $this->handle();
-            $this->setLastUpdate($time);
-        }
-    }
+    //     $lastUpdate = $this->getLastUpdate();
+    //     $lastUpdate = $lastUpdate ? intval($lastUpdate) : 0;
+    //     $updatePeriod = $this->getUpdatePeriod();
+    //     if ($time - $updatePeriod >= $lastUpdate) {
+    //         $this->handle();
+    //         $this->setLastUpdate($time);
+    //     }
+    // }
 
     // private function test()  {
     //     DB::table('activity')->insert(
@@ -81,8 +81,6 @@ class CaldavSync implements ShouldQueue
     // }
 
     public function handle() {
-        sleep(10);
-        return;
         $calendars = $this->getCalendars();
 
         if (empty($calendars)) {
