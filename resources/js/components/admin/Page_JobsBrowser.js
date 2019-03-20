@@ -1,7 +1,7 @@
 import React, { Component} from "react";
 import {request} from '../../utils/helper';
 import moment from 'moment';
-import { Icon, Button, Dropdown, Modal, Dimmer, Loader, Segment, Transition } from 'semantic-ui-react'
+import { Icon, Button, Dropdown, Modal, Form, Dimmer, Loader, Segment, Transition } from 'semantic-ui-react'
 
 import { getJobsAtDate, getJobsInDates, getDays, MonthListDay } from '../etc/Calendar_Helper';
 
@@ -37,7 +37,8 @@ class Page_JobsBrowser extends Component{
 
             newFormOpen: false,
             editFormOpen: false,
-            editFormValues: {}
+            editFormValues: {},
+            formLoading: false
         };
 
         this.getNextOpenJobs = this.getNextOpenJobs.bind(this);
@@ -157,6 +158,7 @@ class Page_JobsBrowser extends Component{
         const self = this;
         const values = this.formRef.current.getPreparedValues();
         const jobs = [...self.state.jobs];
+        self.setState({formLoading: true})
 
         request('jobs', '', 'POST', values)
         .then(result => {
@@ -172,12 +174,14 @@ class Page_JobsBrowser extends Component{
     }
 
     handleCloseNewForm(e) {
-        this.setState({ newFormOpen: false })
+        this.setState({
+            newFormOpen: false,
+            formLoading: false
+        })
         if (typeof e !== "undefined") {
             e.preventDefault()
         }
     }
-
 
     handleOpenEditForm(e, job = {}) {
         // console.log('handleOpenEditForm', e, job);
@@ -193,6 +197,7 @@ class Page_JobsBrowser extends Component{
         const values = this.formRef.current.getPreparedValues();
         const jobId = values.id;
         let jobs = [...this.state.jobs];
+        self.setState({formLoading: true})
 
         request('jobs/'+jobId, '', 'PUT', values)
         .then(result => {
@@ -217,7 +222,10 @@ class Page_JobsBrowser extends Component{
     }
 
     handleCloseEditForm(e) {
-        this.setState({ editFormOpen: false })
+        this.setState({
+            editFormOpen: false,
+            formLoading: false
+        })
 
         if (typeof e !== "undefined") {
             e.preventDefault()
@@ -252,7 +260,7 @@ class Page_JobsBrowser extends Component{
     }
 
     render(){
-        const {jobs, templates, startDate, loadingJobs} = this.state;
+        const {jobs, templates, startDate, loadingJobs, formLoading} = this.state;
         const days = getDays(startDate);
         const nextOpenJobs = this.getNextOpenJobs(jobs);
 
@@ -265,20 +273,18 @@ class Page_JobsBrowser extends Component{
                 centered={false}
             >
                 <Modal.Header>
-                    <div className="">
-                        <button className="ui button right floated" onClick={this.handleCloseNewForm}>Cancel</button>
-                        <button className="ui button primary right floated" type="submit" onClick={this.handleSaveNewForm}>Save</button>
-                    </div>
+                    <Button className="right floated" onClick={this.handleCloseNewForm}>Cancel</Button>
+                    <Button className="primary right floated" onClick={this.handleSaveNewForm} disabled={formLoading}>Save</Button>
                     New Job
                 </Modal.Header>
                 <Modal.Content>
-                    <form className="ui form jobs-form" onSubmit={this.handleSaveNewForm}>
+                    <Form className="jobs-form" onSubmit={this.handleSaveNewForm} loading={formLoading}>
                         <JobsForm ref={this.formRef}
                             settings={jobsFormSettings}
                             templates={templates}
                             values={this.state.editFormValues}
                         />
-                    </form>
+                    </Form>
                 </Modal.Content>
             </Modal>
         );
@@ -292,20 +298,18 @@ class Page_JobsBrowser extends Component{
                 centered={false}
             >
                 <Modal.Header>
-                    <div className="">
-                        <button className="ui button right floated" onClick={this.handleCloseEditForm}>Cancel</button>
-                        <button className="ui button primary right floated" type="submit" onClick={this.handleSaveEditForm}>Save</button>
-                    </div>
+                    <Button className="right floated" onClick={this.handleCloseEditForm}>Cancel</Button>
+                    <Button className="primary right floated" onClick={this.handleSaveEditForm} disabled={formLoading}>Save</Button>
                     Edit Job
                 </Modal.Header>
                 <Modal.Content>
-                    <form className="ui form jobs-form" onSubmit={this.handleSaveEditForm}>
+                    <Form className="jobs-form" onSubmit={this.handleSaveEditForm} loading={formLoading}>
                         <JobsForm ref={this.formRef}
                             settings={jobsFormSettings}
                             templates={templates}
                             values={this.state.editFormValues}
                         />
-                    </form>
+                    </Form>
                 </Modal.Content>
             </Modal>
         );

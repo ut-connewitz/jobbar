@@ -1,7 +1,7 @@
 import React, { Component} from "react";
 import {request} from '../../utils/helper';
 import { Route, Link } from "react-router-dom";
-import { Modal } from 'semantic-ui-react'
+import { Modal, Form, Button } from 'semantic-ui-react'
 
 
 import Component_TemplatesEntry from './Component_TemplatesEntry';
@@ -34,7 +34,8 @@ class Page_Templates extends Component{
 
             formErrors: [],
 
-            editTemplateValues: {}
+            editTemplateValues: {},
+            formLoading: false
         };
 
         this.handleOpenNewForm = this.handleOpenNewForm.bind(this);
@@ -60,12 +61,18 @@ class Page_Templates extends Component{
     }
 
     handleOpenNewForm(e) {
-        this.setState({ newFormOpen: true })
+        this.setState({
+            newFormOpen: true,
+            editTemplateValues: {}
+        })
         e.preventDefault()
     }
 
     handleCloseNewForm() {
-        this.setState({ newFormOpen: false })
+        this.setState({
+            newFormOpen: false,
+            formLoading: false
+        })
     }
 
     handleSaveNewForm(e) {
@@ -73,6 +80,7 @@ class Page_Templates extends Component{
         const values = this.formRef.current.getPreparedValues();
         let templates = [...this.state.templates];
         const formErrors = [...this.state.formErrors];
+        self.setState({formLoading: true})
 
         // TODO disable form / loading state !
 
@@ -99,17 +107,19 @@ class Page_Templates extends Component{
     }
 
     handleCloseEditForm() {
-        this.setState({ editFormOpen: false })
+        this.setState({
+            editFormOpen: false,
+            formLoading: false
+        })
     }
 
     handleSaveEditForm(e) {
         const self = this;
         const values = this.formRef.current.getPreparedValues();
-        console.log('Update Template', values);
-
         const tmlId = values.id;
         const templates = [...this.state.templates];
         const formErrors = [...this.state.formErrors];
+        self.setState({formLoading: true})
 
         request('templates/'+tmlId, '', 'PUT', values)
         .then(result => {
@@ -152,7 +162,7 @@ class Page_Templates extends Component{
     }
 
     render(){
-        const templates = this.state.templates;
+        const {templates, formLoading} = this.state;
 
         const modalFormNew = (
             <Modal
@@ -163,25 +173,18 @@ class Page_Templates extends Component{
                 centered={false}
             >
                 <Modal.Header>
-                    <div className="">
-                        <button className="ui button right floated" onClick={this.handleCloseNewForm}>Cancel</button>
-                        <button className="ui button primary right floated" type="submit" onClick={this.handleSaveNewForm}>Save</button>
-                    </div>
+                    <Button className="right floated" onClick={this.handleCloseNewForm}>Cancel</Button>
+                    <Button className="primary right floated" onClick={this.handleSaveNewForm} disabled={formLoading}>Save</Button>
                     New Template
                 </Modal.Header>
                 <Modal.Content>
-                    <form className="ui form jobs-form" onSubmit={this.handleSaveNewForm}>
-                        {/* <TemplatesForm ref={this.formRef}
-                            allow_childJobs={true}
-                            values={{}}
-                            errors={this.state.formErrors}
-                        /> */}
+                    <Form className="jobs-form" onSubmit={this.handleSaveNewForm} loading={formLoading}>
                         <TemplatesForm ref={this.formRef}
                             settings={templatesFormSettings}
                             values={this.state.editTemplateValues}
                             errors={this.state.formErrors}
                         />
-                    </form>
+                    </Form>
                 </Modal.Content>
             </Modal>
         );
@@ -195,25 +198,18 @@ class Page_Templates extends Component{
                 centered={false}
             >
                 <Modal.Header>
-                    <div className="">
-                        <button className="ui button right floated" onClick={this.handleCloseEditForm}>Cancel</button>
-                        <button className="ui button primary right floated" type="submit" onClick={this.handleSaveEditForm}>Save</button>
-                    </div>
+                    <Button className="right floated" onClick={this.handleCloseEditForm}>Cancel</Button>
+                    <Button className="primary right floated" onClick={this.handleSaveEditForm} disabled={formLoading}>Save</Button>
                     Edit Template
                 </Modal.Header>
                 <Modal.Content>
-                    <form className="ui form jobs-form" onSubmit={this.handleSaveEditForm}>
-                        {/* <TemplatesForm ref={this.formRef}
-                            allow_childJobs={true}
-                            values={this.state.editTemplateValues}
-                            errors={this.state.formErrors}
-                        /> */}
+                    <Form className="jobs-form" onSubmit={this.handleSaveEditForm} loading={formLoading}>
                         <TemplatesForm ref={this.formRef}
                             settings={templatesFormSettings}
                             values={this.state.editTemplateValues}
                             errors={this.state.formErrors}
                         />
-                    </form>
+                    </Form>
                 </Modal.Content>
             </Modal>
         );
@@ -254,20 +250,15 @@ class Page_Templates extends Component{
 
                 <Route path="/admin/templates/new" render={(props) => {
                     return (
-                        <form className="ui form jobs-form" onSubmit={this.handleSaveNewForm}>
-                            <button className="ui button " onClick={this.handleCloseNewForm}>Cancel</button>
-                            <button className="ui button primary" type="submit" onClick={this.handleSaveNewForm}>Save</button>
-                            {/* <TemplatesForm ref={this.formRef}
-                                allow_childJobs={true}
-                                values={{}}
-                                errors={this.state.formErrors}
-                            /> */}
+                        <Form className="jobs-form" onSubmit={this.handleSaveNewForm} loading={formLoading}>
+                            <Button onClick={this.handleCloseNewForm}>Cancel</Button>
+                            <Button className="primary" onClick={this.handleSaveNewForm} disabled={formLoading}>Save</Button>
                             <TemplatesForm ref={this.formRef}
                                 settings={templatesFormSettings}
                                 values={this.state.editTemplateValues}
                                 errors={this.state.formErrors}
                             />
-                        </form>
+                        </Form>
                     );
                 }} />
 
@@ -287,18 +278,17 @@ class Page_Templates extends Component{
                     }
 
                     return (
-                        <form className="ui form jobs-form" onSubmit={this.handleSaveEditForm}>
+                        <Form className="jobs-form" onSubmit={this.handleSaveEditForm} loading={formLoading}>
                             <div className="field">
-                                <button className="ui button primary" type="submit" onClick={this.handleSaveEditForm}>Apply</button>
-                                <button className="ui button " onClick={this.handleCloseNewForm}>Cancel</button>
+                                <Button onClick={this.handleCloseEditForm}>Cancel</Button>
+                                <Button className="primary" onClick={this.handleSaveEditForm} disabled={formLoading}>Save</Button>
                             </div>
-                            {/* <TemplatesForm ref={this.formRef} allow_childJobs={true} values={template} /> */}
                             <TemplatesForm ref={this.formRef}
                                 settings={templatesFormSettings}
                                 values={this.state.editTemplateValues}
                                 errors={this.state.formErrors}
                             />
-                        </form>
+                        </Form>
                     );
                 }} />
 
