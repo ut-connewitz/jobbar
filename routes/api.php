@@ -1,6 +1,11 @@
 <?php
 
 use Illuminate\Http\Request;
+
+use Illuminate\Auth\AuthenticationException;
+use App\Http\Middleware\AuthenticateAdmin;
+use App\Http\Middleware\AuthenticateAuthor;
+use App\Http\Middleware\AuthenticateUser;
 use App\Http\Controllers\JobController;
 
 /*
@@ -31,21 +36,28 @@ Route::post('user/register', 'UserController@register')->middleware('auth.admin'
 | Job Routes
 |--------------------------------------------------------------------------
 */
-
-// If cron works -> enable route /jobs with cron-middleware to init cronjobs (caldav sync)
+// If cron works -> enable cron-middleware for route /jobs to init cronjobs (caldav sync)
 // Route::middleware(['cron'])->group(function () {
 // });
 
+/*
+| get all jobs (for author/admin)
+| get only public jobs (for authenticated) */
+Route::get('jobs', function(Request $request) {
+    if (AuthenticateAuthor::checkAuth($request)) {
+        return (new JobController)->getAll($request);
+    }
+    if (AuthenticateUser::checkAuth($request)) {
+        return (new JobController)->getAllPublic($request);
+    }
+    throw new AuthenticationException;
+});
+
 Route::middleware(['auth.author'])->group(function () {
+    // If cron works, we do not need the /jobs/caldavsync route
     Route::get('jobs/caldavsync', function(Request $request) {
         Artisan::call('schedule:run');
         return "OK";
-    });
-
-    /*
-    | get all jobs (for author/admin) */
-    Route::get('jobs', function(Request $request) {
-        return (new JobController)->getAll($request);
     });
 
     /*
@@ -70,11 +82,6 @@ Route::middleware(['auth.author'])->group(function () {
 });
 
 Route::middleware(['auth.user'])->group(function () {
-    /*
-    | get only public jobs (for authenticated user) */
-    Route::get('jobs', function(Request $request) {
-        return (new JobController)->getAllPublic($request);
-    });
     /*
     | Add a user as subscriber to a job */
     Route::post('jobs/{job}/subscriber', 'JobController@addSubscriber')->where('job', '[0-9]+');
