@@ -26,12 +26,8 @@ class Component_JobsForm extends Component{
             state: "private",
             title: '',
             description: '',
-            // start datetime and this form date/time properties
-            // start_at: '',
             start_date: '',
             start_time: '',
-            // end datetime and this form date/time properties
-            // end_at: '',
             end_date: '',
             end_time: '',
 
@@ -126,32 +122,6 @@ class Component_JobsForm extends Component{
 
     getPreparedValues() {
         let values = {...this.state.values}; // copy object to avoid affetcs on form values
-
-        // if (values.date_start != '') {
-        //     // TODO try/catch date creation... eg with moment().isValid()
-        //     // values.date_start = new Date(
-        //     //     values.time_start != ''
-        //     //         ? values.date_start + ' ' + values.time_start
-        //     //         : values.date_start
-        //     // )
-        //     // .toISOString().slice(0, 19).replace('T', ' '); // convert to mysql datetime format
-        //     values.start_at = moment(values.date_start + ' ' + values.time_start).format("YYYY-MM-DD HH:mm:ss")
-        //     delete values.date_start;
-        //     delete values.time_start;
-        // }
-
-        // if (values.date_end != '') {
-        //     // TODO try/catch date creation... eg with moment().isValid()
-        //     // values.date_end = new Date(
-        //     //     values.time_end != ''
-        //     //         ? values.date_end + ' ' + values.time_end
-        //     //         : values.date_end
-        //     // )
-        //     // .toISOString().slice(0, 19).replace('T', ' '); // convert to mysql datetime format
-        //     values.end_at = moment(values.date_end + ' ' + values.time_end).format("YYYY-MM-DD HH:mm:ss")
-        //     delete values.date_end;
-        //     delete values.time_end;
-        // }
 
         values.start_date = values.start_date === '' ? '' : moment(values.start_date).format("YYYY-MM-DD");
         values.start_time = values.start_time === '' ? '' : moment.utc(values.start_time, "HH:mm").format("HH:mm");
@@ -398,27 +368,6 @@ class Component_JobsForm extends Component{
                             {endTime}
                         </div>}
 
-
-                        {/* {showDateStart && <div className="field two fields">
-                            <div className="field">
-                                <label>Date Start</label>
-                                <input type="date" name="date_start" value={values.date_start} placeholder="Date - YYYY/MM/DD" onChange={this.handleChangeInput} />
-                            </div>
-                            <div className="field">
-                                <label>Time</label>
-                                <input type="time" name="time_start" value={values.time_start} placeholder="Time - HH:TT" onChange={this.handleChangeInput} />
-                            </div>
-                        </div> }
-                        {showDateEnd && <div className="field two fields">
-                            <div className="field">
-                                <label>Date End</label>
-                                <input type="date" name="date_end" value={values.date_end} placeholder="Date - YYYY/MM/DD" onChange={this.handleChangeInput} />
-                            </div>
-                            <div className="field">
-                                <label>Time</label>
-                                <input type="time" name="time_end" value={values.time_end} placeholder="Time - HH:TT" onChange={this.handleChangeInput} />
-                            </div>
-                        </div> } */}
                     </div>
 
                     {values.has_jobs.map((childJob, cjidx) =>
@@ -464,11 +413,6 @@ class Component_JobsForm extends Component{
                     {this.showField('state') && <div className="field">
                         <label>State</label>
                         <Checkbox toggle checked={values.state == "public"} name="state" className="job-is-public-toggle" onChange={this.handleToggleState} />
-                        {/* <select className="ui dropdown" value={values.state} name="state" onChange={this.handleChangeInput}>
-                            <option value="">State</option>
-                            <option value="private" >Private</option>
-                            <option value="public">Public</option>
-                        </select> */}
                     </div>}
 
                     {/* <div className="field">
