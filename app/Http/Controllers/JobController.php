@@ -346,40 +346,6 @@ class JobController extends Controller
         return $activities;
     }
 
-    /**
-     * @deprecated version
-     *
-     * Get some values for a parent jobs like:
-     * creator
-     * child jobs
-     * subscribed users
-     *
-     * @param [type] $job
-     * @return Collection of jobs
-     */
-    // private function getJobMeta(Job $job) {
-    //     // may get creator
-    //     if ($job->creator) {
-    //         $job->creator = User::where("id", $job->creator)
-    //             ->first();
-    //     }
-
-    //     // get child jobs
-    //     $job->has_jobs = Job::where("parent_id", $job->id)
-    //         ->get();
-
-    //     // get meta values of child jobs
-    //     $job->has_jobs = $job->has_jobs->map(function($job) {
-    //         $job = $this->getJobMeta($job);
-    //         return $job;
-    //     });
-
-    //     // get subscribed users
-    //     $job->users_subscribed = $job->getSubscribedUsers();
-
-    //     return $job;
-    // }
-
     private function createChild(Request $request)
     {
         $validator = Validator::make($request->all(), [
