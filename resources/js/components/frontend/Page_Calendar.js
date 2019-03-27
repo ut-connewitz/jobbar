@@ -49,14 +49,14 @@ class JobsList extends Component{
             <div className="jobs-calendar-wrapper">
                 <h2>{moment().format("MMMM")}</h2>
 
-                <div class="ui grid jobs-calendar">
-                    <div class="two wide column">eins</div>
-                    <div class="two wide column">zwei</div>
-                    <div class="two wide column">drei</div>
-                    <div class="two wide column">view</div>
-                    <div class="two wide column">fünf</div>
-                    <div class="two wide column">sechs</div>
-                    <div class="two wide column">sieben</div>
+                <div className="ui grid jobs-calendar">
+                    <div className="two wide column">eins</div>
+                    <div className="two wide column">zwei</div>
+                    <div className="two wide column">drei</div>
+                    <div className="two wide column">view</div>
+                    <div className="two wide column">fünf</div>
+                    <div className="two wide column">sechs</div>
+                    <div className="two wide column">sieben</div>
                 </div>
 
                  <div id="calendar"></div>
