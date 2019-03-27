@@ -68,7 +68,7 @@ class Component_JobsForm extends Component{
         values.end_time = values.end_time === '' ? '' : moment.utc(values.end_time, "HH:mm").format("HH:mm");
 
         this.isChildJob = props.isChildJob || false;
-        this.isNewJob = typeof props.values === 'undefined' || (! "id" in props.values) || props.values.id === null;
+        this.isNewJob = typeof props.values === 'undefined' || !("id" in props.values) || props.values.id === null;
 
         this.settings = "settings" in props
             ? {...settingsDefault, ...props.settings}
