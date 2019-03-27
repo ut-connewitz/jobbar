@@ -34,7 +34,7 @@ class JobsList extends Component{
     render(){
 
         const day = (date, jobs) => {
-            return (<div class="two wide column jobs-calendar-day">eins</div>);
+            return (<div className="two wide column jobs-calendar-day">eins</div>);
         }
 
         const week = () => {
